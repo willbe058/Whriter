@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/general">
+        <com.jenzz.materialpreference.Preference
+            android:key="clear_key"
+            android:title="@string/clear_all"/>
+        <com.jenzz.materialpreference.SwitchPreference
+            android:key="lock_key"
+            android:summary="@string/use_sum"
+            android:title="@string/use_lock"/>
+
+    </com.jenzz.materialpreference.PreferenceCategory>
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/security">
+        <com.jenzz.materialpreference.Preference
+            android:key="passwd_key"
+            android:summary="@string/lock_sum"
+            android:title="@string/lock_screen"/>
+        <com.jenzz.materialpreference.SwitchPreference
+            android:key="finger_key"
+            android:summary="@string/finger_sum"
+            android:title="@string/fingerprint"/>
+        <com.jenzz.materialpreference.Preference
+            android:key="relock_key"
+            android:summary="@string/relock_sum"
+            android:title="@string/relock"/>
+    </com.jenzz.materialpreference.PreferenceCategory>
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/helpfeed">
+        <com.jenzz.materialpreference.Preference
+            android:key="help_key"
+            android:title="@string/help"
+            />
+        <com.jenzz.materialpreference.Preference
+            android:key="feed_key"
+            android:title="@string/feedback"/>
+    </com.jenzz.materialpreference.PreferenceCategory>
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/about">
+        <com.jenzz.materialpreference.Preference
+            android:key="about_key"
+            android:title="@string/about_us"/>
+        <com.jenzz.materialpreference.Preference
+            android:key="version_key"
+            android:title="@string/version"
+            android:summary="0.6.1"/>
+    </com.jenzz.materialpreference.PreferenceCategory>
+</PreferenceScreen>

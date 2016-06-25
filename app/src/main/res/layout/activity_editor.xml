@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.DrawerLayout
+    android:id="@+id/drawer_layout"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:ignore="MissingPrefix">
+
+    <android.support.design.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorPaperLight"
+        >
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorPaperLight"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <android.support.design.widget.AppBarLayout
+                android:id="@+id/appbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:gravity="center">
+
+                    <EditText
+                        android:id="@+id/editor_title"
+                        fontPath="fonts/Anonymous-Pro.ttf"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/appbar"
+                        android:layout_gravity="center"
+                        android:background="@null"
+                        android:gravity="center"
+                        android:hint="Title"
+                        android:lines="1"
+                        android:maxLines="1"
+                        android:textColor="@color/colorBlack"
+                        android:textColorHint="@android:color/darker_gray"
+                        android:textSize="25sp"
+                        android:textStyle="bold"/>
+                </android.support.v7.widget.Toolbar>
+            </android.support.design.widget.AppBarLayout>
+
+            <com.bowyer.app.fabtoolbar.FabToolbar
+                android:id="@+id/fabtoolbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                app:tb_anim_duration="400"
+                app:tb_color="@color/colorPrimary"
+                app:tb_fab_type="normal">
+
+                <!--add your original layout-->
+                <HorizontalScrollView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/button_bold"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_bold"
+                            />
+
+                        <TextView
+                            android:id="@+id/button_link"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_link"/>
+
+                        <TextView
+                            android:id="@+id/button_image"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_image"/>
+
+                        <TextView
+                            android:id="@+id/button_list_ol"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_list_ol"/>
+
+                        <TextView
+                            android:id="@+id/button_list_ul"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_list_ul"/>
+
+                        <TextView
+                            android:id="@+id/button_blockquote"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_blockquote"/>
+
+                        <TextView
+                            android:id="@+id/button_hr"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_hr"/>
+
+                        <TextView
+                            android:id="@+id/button_align_left"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_align_left"/>
+
+                        <TextView
+                            android:id="@+id/button_align_center"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_align_center"/>
+
+                        <TextView
+                            android:id="@+id/button_align_right"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_align_right"/>
+
+                        <TextView
+                            android:id="@+id/button_italic"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_italic"/>
+
+                        <TextView
+                            android:id="@+id/button_indent"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_indent"/>
+
+                        <TextView
+                            android:id="@+id/button_outdent"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_outdent"/>
+
+                        <TextView
+                            android:id="@+id/button_math"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_code"/>
+
+                        <TextView
+                            android:id="@+id/button_underline"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_underline"/>
+
+                        <TextView
+                            android:id="@+id/button_html5"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_html5"/>
+
+                        <TextView
+                            android:id="@+id/button_scale"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_font"/>
+
+                        <TextView
+                            android:id="@+id/button_strike"
+                            style="@style/EditorIcon"
+                            android:text="@string/icon_strike_through"/>
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+            </com.bowyer.app.fabtoolbar.FabToolbar>
+
+
+            <com.xpf.me.whriter.widget.ObservableWebView
+                android:id="@+id/edit_lines"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@id/fabtoolbar"
+                android:layout_below="@id/appbar"
+                android:layout_marginLeft="8dp"
+                android:background="@color/colorPaperLight"
+                android:gravity="center"
+                android:scrollbars="none"
+                />
+
+
+        </RelativeLayout>
+
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="end|bottom"
+            android:layout_margin="16dp"
+            android:src="@drawable/ic_mode_edit_white_24dp"
+            app:backgroundTint="@color/colorFab"/>
+    </android.support.design.widget.CoordinatorLayout>
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@color/colorBlack"
+        android:fitsSystemWindows="true"
+        android:paddingTop="36dp">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            >
+
+            <ImageButton
+                android:id="@+id/button_delete"
+                style="@style/drawer_button"
+                android:src="@drawable/ic_delete_white_24dp"/>
+
+            <ImageButton
+                android:id="@+id/button_share"
+                style="@style/drawer_button"
+                android:layout_below="@id/button_delete"
+                android:src="@drawable/ic_share_white_24dp"/>
+
+            <ImageButton
+                style="@style/drawer_button"
+                android:layout_below="@id/button_share"
+                android:src="@drawable/ic_folder_white_24dp"/>
+        </RelativeLayout>
+
+    </ScrollView>
+
+
+</android.support.v4.widget.DrawerLayout>

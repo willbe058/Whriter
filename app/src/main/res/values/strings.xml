@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Whriter</string>
+    <string name="action_settings">Settings</string>
+
+    <!--Editor-->
+    <string name="place_holder_text">Your word, your thought…</string>
+    <string name="saved">Saved </string>
+    <!--Home-->
+    <string name="title">Title</string>
+    <string name="title_not_null">Title can not be null</string>
+    <string name="name">Folder name</string>
+    <string name="name_not_null">Folder name can not be null</string>
+    <string name="press_back">Press again to exit</string>
+    <string name="rename">rename</string>
+    <string name="delete">delete</string>
+    <string name="rename_title">Rename</string>
+    <string name="share">Share to…</string>
+    <string name="share_html">HTML</string>
+    <string name="share_picture">Picture</string>
+    <!--Settings-->
+    <string name="general">General</string>
+    <string name="clear_all">Clear all files</string>
+    <string name="use_lock">Lock screen when open app</string>
+    <string name="use_sum">To avoid your private articles leakage </string>
+    <string name="security">Security</string>
+    <string name="lock_screen">Screen lock</string>
+    <string name="lock_sum">Password</string>
+    <string name="fingerprint">Fingerprint unlock</string>
+    <string name="finger_sum">You can also use password in the meantime</string>
+    <string name="relock">Re-lock apps</string>
+    <string name="relock_sum">Immediately</string>
+    <string name="helpfeed">Help and feedback</string>
+    <string name="help">Help</string>
+    <string name="feedback">Send feedback</string>
+    <string name="about">About</string>
+    <string name="about_us">About us</string>
+    <string name="version">Version</string>
+</resources>

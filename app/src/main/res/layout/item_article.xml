@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:clickable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:paddingTop="16dp"
+    >
+
+    <ImageView
+        android:id="@+id/img_file_type"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginLeft="16dp"
+        android:src="@drawable/ic_document"/>
+
+    <TextView
+        android:id="@+id/create_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_marginRight="16dp"
+        android:text="2016/06/02"
+        android:textSize="12sp"/>
+
+    <RelativeLayout
+        android:id="@+id/title_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="8dp"
+        android:layout_toLeftOf="@id/create_date"
+        android:layout_toRightOf="@id/img_file_type">
+
+        <TextView
+            android:id="@+id/tx_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxLines="1"
+            android:text="Title File Type"
+            android:textColor="@color/colorPaperDark"/>
+
+        <TextView
+            android:id="@+id/tx_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/tx_title"
+            android:layout_below="@id/tx_title"
+            android:layout_marginRight="8dp"
+            android:ellipsize="end"
+            android:lines="1"
+            android:maxLines="1"
+            android:text="sub title content and folder not"
+            android:textSize="12sp"
+            android:visibility="visible"/>
+
+    </RelativeLayout>
+
+</RelativeLayout>

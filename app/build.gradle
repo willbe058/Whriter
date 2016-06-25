@@ -1,0 +1,43 @@
+apply plugin: 'com.android.application'
+apply plugin: 'realm-android'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.3"
+
+    defaultConfig {
+        applicationId "com.xpf.me.whriter"
+        minSdkVersion 16
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support:design:23.4.0'
+    compile 'uk.co.chrisjenx:calligraphy:2.2.0'
+    compile 'com.bowyer.app:fab-toolbar:1.1.0@aar'
+    compile('com.github.ozodrukh:CircularReveal:1.3.1@aar') {
+        transitive = true;
+    }
+    compile 'com.github.clans:fab:1.6.3'
+    compile 'com.android.support:cardview-v7:23.4.0'
+    compile project(':editor')
+    compile 'io.realm:android-adapters:1.2.1'
+    compile 'com.yarolegovich:lovely-dialog:1.0.4'
+    compile 'com.squareup:otto:1.3.8'
+    compile 'com.github.ZieIony:NaturalDateFormat:809529caef'
+    compile 'com.cocosw:bottomsheet:1.+@aar'
+    compile 'com.jenzz:materialpreference:1.3'
+
+}

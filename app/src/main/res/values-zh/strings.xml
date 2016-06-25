@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Whriter</string>
+    <string name="action_settings">设置</string>
+    <string name="name">文件夹名称</string>
+    <string name="name_not_null">文件夹名称不能为空</string>
+    <string name="place_holder_text">你的文字，你的思想…</string>
+    <string name="press_back">再按一下退出</string>
+    <string name="saved">已保存</string>
+    <string name="title">标题</string>
+    <string name="title_not_null">标题不能为空</string>
+    <string name="delete">删除</string>
+    <string name="rename">重命名</string>
+    <string name="rename_title">重命名</string>
+    <string name="share">分享为…</string>
+    <string name="share_html">HTML</string>
+    <string name="share_picture">图片</string>
+</resources>
