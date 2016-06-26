@@ -168,7 +168,6 @@
 
             </com.bowyer.app.fabtoolbar.FabToolbar>
 
-
             <com.xpf.me.whriter.widget.ObservableWebView
                 android:id="@+id/edit_lines"
                 android:layout_width="match_parent"
@@ -180,8 +179,6 @@
                 android:gravity="center"
                 android:scrollbars="none"
                 />
-
-
         </RelativeLayout>
 
 

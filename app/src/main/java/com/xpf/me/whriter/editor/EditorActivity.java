@@ -1,15 +1,22 @@
 package com.xpf.me.whriter.editor;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceCategory;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.content.SharedPreferencesCompat;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -21,6 +28,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
@@ -48,14 +56,18 @@ import com.xpf.me.whriter.widget.ObservableWebView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Whitelist;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import io.realm.Realm;
-import uk.co.chrisjenx.calligraphy.CalligraphyContextWrapper;
 
 /**
  * Created by pengfeixie on 16/5/23.
@@ -64,6 +76,7 @@ public class EditorActivity extends AppCompatActivity {
 
     private static final String TAG = EditorActivity.class.getName();
     private static final String EXTRA_ID = "file_id";
+    private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
 
     private FabToolbar fabToolbar;
     private FloatingActionButton fab;
@@ -71,6 +84,7 @@ public class EditorActivity extends AppCompatActivity {
     private DrawerLayout drawerLayout;
     private EditText titleEdit;
     private ActionBarDrawerToggle toggle;
+    private ImageButton shareBtn;
 
     private Icarus icarus;
 
@@ -103,6 +117,7 @@ public class EditorActivity extends AppCompatActivity {
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         fabToolbar = ((FabToolbar) findViewById(R.id.fabtoolbar));
         fab = ((FloatingActionButton) findViewById(R.id.fab));
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -189,7 +204,7 @@ public class EditorActivity extends AppCompatActivity {
             }
         });
 
-        ImageButton shareBtn = (ImageButton) findViewById(R.id.button_share);
+        shareBtn = (ImageButton) findViewById(R.id.button_share);
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -201,12 +216,129 @@ public class EditorActivity extends AppCompatActivity {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 switch (which) {
+                                    case R.id.share_html:
+                                        icarus.getContent(new Callback() {
+                                            @Override
+                                            public void run(String params) {
+                                                final Map<String, String> map = new HashMap<>();
+                                                try {
+                                                    JSONObject jsonObj = new JSONObject(params);
+                                                    String key;
+                                                    String value;
+                                                    Iterator<String> i = jsonObj.keys();
+                                                    while (i.hasNext()) {
+                                                        key = i.next();
+                                                        value = jsonObj.getString(key);
+                                                        map.put(key, value);
+                                                    }
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+                                                shareText(cleanPreserveLineBreaks(map.get("content")));
+                                            }
+                                        });
+                                        break;
+                                    case R.id.share_picture:
+                                        Log.i(TAG, "onClick: ");
+                                        if (ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                                != PackageManager.PERMISSION_GRANTED) {
+                                            //申请WRITE_EXTERNAL_STORAGE权限
+                                            ActivityCompat.requestPermissions(EditorActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                                    WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                                        } else {
+                                            Bitmap b = screenshot(webView);
+                                            try {
+                                                b.compress(Bitmap.CompressFormat.JPEG, 95,
+                                                        new FileOutputStream(Environment.getExternalStorageDirectory() + "/test.png"));
+                                            } catch (FileNotFoundException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
 
+                                        break;
                                 }
                             }
                         }).show();
             }
         });
+    }
+
+    public static String cleanPreserveLineBreaks(String bodyHtml) {
+        // get pretty printed html with preserved br and p tags
+        String prettyPrintedBodyFragment = Jsoup.clean(bodyHtml, "", Whitelist.none().addTags("br", "p"), new Document.OutputSettings().prettyPrint(true));
+        // get plain text with preserved line breaks by disabled prettyPrint
+        Log.i(TAG, "cleanPreserveLineBreaks: " + Jsoup.clean(prettyPrintedBodyFragment, "", Whitelist.none(), new Document.OutputSettings().prettyPrint(false)));
+        return Jsoup.clean(prettyPrintedBodyFragment, "", Whitelist.none(), new Document.OutputSettings().prettyPrint(false)) + "\n\n来自Whriter";
+    }
+
+    public void shareText(String text) {
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, text);
+        shareIntent.setType("text/plain");
+
+        //设置分享列表的标题，并且每次都显示分享列表
+        startActivity(Intent.createChooser(shareIntent, "分享到"));
+    }
+
+    private void doNext(int requestCode, int[] grantResults) {
+        if (requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Bitmap b = screenshot(webView);
+                try {
+                    b.compress(Bitmap.CompressFormat.JPEG, 95,
+                            new FileOutputStream(Environment.getExternalStorageDirectory() + "/test.png"));
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+                Log.i(TAG, "doNext: grant");
+
+                // Permission Granted
+            } else {
+                Log.i(TAG, "doNext: Denied!FXXK");
+                // Permission Denied
+            }
+        }
+    }
+
+    public static Bitmap screenshot(WebView webView) {
+        try {
+            float scale = webView.getScale();
+            Log.i(TAG, "screenshot: " + scale);
+            int height = (int) (webView.getContentHeight() * scale + 0.5);
+            Bitmap bitmap = Bitmap.createBitmap(webView.getWidth(), height, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(bitmap);
+            webView.draw(canvas);
+            return bitmap;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static Bitmap screenshot2(WebView webView) {
+        webView.measure(View.MeasureSpec.makeMeasureSpec(
+                View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
+                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+        webView.layout(0, 0, webView.getMeasuredWidth(), webView.getMeasuredHeight());
+        webView.setDrawingCacheEnabled(true);
+        webView.buildDrawingCache();
+        Bitmap bitmap = Bitmap.createBitmap(webView.getMeasuredWidth(),
+                webView.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        int iHeight = bitmap.getHeight();
+        canvas.drawBitmap(bitmap, 0, iHeight, paint);
+        webView.draw(canvas);
+        return bitmap;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        Log.i(TAG, "onRequestPermissionsResult: ");
+        doNext(requestCode, grantResults);
     }
 
     @Override
@@ -218,6 +350,9 @@ public class EditorActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            WebView.enableSlowWholeDocumentDraw();
+        }
         check();
         setContentView(R.layout.activity_editor);
         setUpToolbar((Toolbar) findViewById(R.id.toolbar));
