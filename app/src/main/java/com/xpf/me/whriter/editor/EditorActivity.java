@@ -10,6 +10,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -39,7 +40,6 @@ import com.cocosw.bottomsheet.BottomSheet;
 import com.github.mr5.icarus.Callback;
 import com.github.mr5.icarus.Icarus;
 import com.github.mr5.icarus.TextViewToolbar;
-import com.github.mr5.icarus.button.Button;
 import com.github.mr5.icarus.button.FontScaleButton;
 import com.github.mr5.icarus.button.TextViewButton;
 import com.github.mr5.icarus.entity.Options;
@@ -60,14 +60,22 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Whitelist;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.realm.Realm;
+
+import com.github.mr5.icarus.button.Button;
 
 /**
  * Created by pengfeixie on 16/5/23.
@@ -78,16 +86,23 @@ public class EditorActivity extends AppCompatActivity {
     private static final String EXTRA_ID = "file_id";
     private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
 
-    private FabToolbar fabToolbar;
-    private FloatingActionButton fab;
-    private ObservableWebView webView;
-    private DrawerLayout drawerLayout;
-    private EditText titleEdit;
+    @BindView(R.id.fabtoolbar)
+    FabToolbar fabToolbar;
+    @BindView(R.id.fab)
+    FloatingActionButton fab;
+    @BindView(R.id.edit_lines)
+    ObservableWebView webView;
+    @BindView(R.id.drawer_layout)
+    DrawerLayout drawerLayout;
+    @BindView(R.id.editor_title)
+    EditText titleEdit;
+    @BindView(R.id.button_share)
+    ImageButton shareBtn;
+    @BindView(R.id.button_delete)
+    ImageButton deleteBtn;
+
     private ActionBarDrawerToggle toggle;
-    private ImageButton shareBtn;
-
     private Icarus icarus;
-
     private String content = "";
     private WhriterFile mFile;
 
@@ -113,17 +128,10 @@ public class EditorActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayShowHomeEnabled(true);
     }
 
+    /**
+     * Init drawer
+     */
     private void setUpContent() {
-        drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        fabToolbar = ((FabToolbar) findViewById(R.id.fabtoolbar));
-        fab = ((FloatingActionButton) findViewById(R.id.fab));
-
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fabToolbar.expandFab();
-            }
-        });
         fabToolbar.setFab(fab);
 
         DisplayMetrics metric = new DisplayMetrics();
@@ -159,9 +167,10 @@ public class EditorActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Init editor WebView
+     */
     private void setUpEditor() {
-        webView = (ObservableWebView) findViewById(R.id.edit_lines);
-        titleEdit = ((EditText) findViewById(R.id.editor_title));
         titleEdit.setText(mFile.getTitle());
         webView.setOnScrollChangedCallback(new ObservableWebView.OnScrollChangedCallback() {
             @Override
@@ -176,7 +185,6 @@ public class EditorActivity extends AppCompatActivity {
                 }
             }
         });
-
         WebSettings settings = webView.getSettings();
         settings.setSupportZoom(false);
         TextViewToolbar toolbar = new TextViewToolbar();
@@ -192,115 +200,133 @@ public class EditorActivity extends AppCompatActivity {
         prepareToolbar(toolbar, icarus);
         icarus.render();
         icarus.setContent(content);
-
     }
 
-    private void setUpDrawerButtons() {
-        ImageButton deleteBtn = (ImageButton) findViewById(R.id.button_delete);
-        deleteBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                icarus.setContent("");
-            }
-        });
-
-        shareBtn = (ImageButton) findViewById(R.id.button_share);
-        shareBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                drawerLayout.closeDrawers();
-                new BottomSheet.Builder(EditorActivity.this)
-                        .title(R.string.share)
-                        .sheet(R.menu.menu_share)
-                        .listener(new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                switch (which) {
-                                    case R.id.share_html:
-                                        icarus.getContent(new Callback() {
-                                            @Override
-                                            public void run(String params) {
-                                                final Map<String, String> map = new HashMap<>();
-                                                try {
-                                                    JSONObject jsonObj = new JSONObject(params);
-                                                    String key;
-                                                    String value;
-                                                    Iterator<String> i = jsonObj.keys();
-                                                    while (i.hasNext()) {
-                                                        key = i.next();
-                                                        value = jsonObj.getString(key);
-                                                        map.put(key, value);
-                                                    }
-                                                } catch (JSONException e) {
-                                                    e.printStackTrace();
-                                                }
-                                                shareText(cleanPreserveLineBreaks(map.get("content")));
-                                            }
-                                        });
-                                        break;
-                                    case R.id.share_picture:
-                                        Log.i(TAG, "onClick: ");
-                                        if (ContextCompat.checkSelfPermission(EditorActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                                                != PackageManager.PERMISSION_GRANTED) {
-                                            //申请WRITE_EXTERNAL_STORAGE权限
-                                            ActivityCompat.requestPermissions(EditorActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                                                    WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
-                                        } else {
-                                            Bitmap b = screenshot(webView);
-                                            try {
-                                                b.compress(Bitmap.CompressFormat.JPEG, 95,
-                                                        new FileOutputStream(Environment.getExternalStorageDirectory() + "/test.png"));
-                                            } catch (FileNotFoundException e) {
-                                                e.printStackTrace();
-                                            }
-                                        }
-
-                                        break;
-                                }
-                            }
-                        }).show();
-            }
-        });
-    }
-
+    /**
+     * Remove all tags from html text except <br><p>
+     *
+     * @param bodyHtml HTML string
+     * @return Clean string
+     */
     public static String cleanPreserveLineBreaks(String bodyHtml) {
         // get pretty printed html with preserved br and p tags
-        String prettyPrintedBodyFragment = Jsoup.clean(bodyHtml, "", Whitelist.none().addTags("br", "p"), new Document.OutputSettings().prettyPrint(true));
+        String prettyPrintedBodyFragment = Jsoup.clean(bodyHtml, ""
+                , Whitelist.none().addTags("br", "p")
+                , new Document.OutputSettings().prettyPrint(true));
         // get plain text with preserved line breaks by disabled prettyPrint
-        Log.i(TAG, "cleanPreserveLineBreaks: " + Jsoup.clean(prettyPrintedBodyFragment, "", Whitelist.none(), new Document.OutputSettings().prettyPrint(false)));
-        return Jsoup.clean(prettyPrintedBodyFragment, "", Whitelist.none(), new Document.OutputSettings().prettyPrint(false)) + "\n\n来自Whriter";
+        return Jsoup.clean(prettyPrintedBodyFragment
+                , ""
+                , Whitelist.none()
+                , new Document.OutputSettings().prettyPrint(false))
+                + "\n\n"
+                + AppData.getString(R.string.form_whriter);
     }
 
-    public void shareText(String text) {
+    /**
+     * Share text through system share
+     *
+     * @param text
+     */
+    private void shareText(String text) {
+        File destDir = new File(Environment.getExternalStorageDirectory()
+                + File.separator
+                + "Whriter"
+                + File.separator
+                + "Text");
+        if (!destDir.exists()) {
+            destDir.mkdirs();
+        }
+        try {
+            FileOutputStream fos;
+            fos = new FileOutputStream(Environment.getExternalStorageDirectory()
+                    + File.separator
+                    + "Whriter"
+                    + File.separator
+                    + "Text"
+                    + File.separator
+                    + new Date().toString() + ".txt");
+            fos.write(text.getBytes());
+            fos.close();
+            Toast.makeText(this, AppData.getString(R.string.save_to)
+                    + Environment.getExternalStorageDirectory()
+                    + File.separator
+                    + "Whriter"
+                    + File.separator
+                    + "Text", Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Intent shareIntent = new Intent();
         shareIntent.setAction(Intent.ACTION_SEND);
         shareIntent.putExtra(Intent.EXTRA_TEXT, text);
         shareIntent.setType("text/plain");
 
-        //设置分享列表的标题，并且每次都显示分享列表
-        startActivity(Intent.createChooser(shareIntent, "分享到"));
+        startActivity(Intent.createChooser(shareIntent, AppData.getString(R.string.share_to)));
     }
 
-    private void doNext(int requestCode, int[] grantResults) {
+    private void sharePlainText() {
+        icarus.getContent(new Callback() {
+            @Override
+            public void run(String params) {
+                shareText(cleanPreserveLineBreaks(getEditorContent(params).get("content")));
+            }
+        });
+    }
+
+    private void shareHTMLText() {
+        icarus.getContent(new Callback() {
+            @Override
+            public void run(String params) {
+                shareText(getEditorContent(params).get("content")
+                        + "\n\n"
+                        + AppData.getString(R.string.form_whriter));
+            }
+        });
+    }
+
+    /**
+     * Share the image of the content of the editor
+     */
+    public void shareImage() {
+        //save and get the path of image
+        String imagePath = saveBitmap2Picture();
+
+        if (imagePath != null) {
+            Toast.makeText(this, AppData.getString(R.string.save_to)
+                    + Environment.getExternalStorageDirectory()
+                    + File.separator
+                    + "Whriter"
+                    + File.separator
+                    + "Image", Toast.LENGTH_LONG).show();
+            //use the path to get uri
+            Uri imageUri = Uri.fromFile(new File(imagePath));
+            //then share with uri
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            shareIntent.setType("image/*");
+            startActivity(Intent.createChooser(shareIntent, AppData.getString(R.string.share_to)));
+        }
+    }
+
+    private void shareImageHavingPermission(int requestCode, int[] grantResults) {
         if (requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Bitmap b = screenshot(webView);
-                try {
-                    b.compress(Bitmap.CompressFormat.JPEG, 95,
-                            new FileOutputStream(Environment.getExternalStorageDirectory() + "/test.png"));
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
-                Log.i(TAG, "doNext: grant");
-
+                shareImage();
                 // Permission Granted
             } else {
-                Log.i(TAG, "doNext: Denied!FXXK");
+                Toast.makeText(this, "Error", Toast.LENGTH_LONG).show();
                 // Permission Denied
             }
         }
     }
 
+    /**
+     * Save a WebView content to a bitmap
+     *
+     * @param webView Editor WebView
+     * @return Saved bitmap
+     */
     public static Bitmap screenshot(WebView webView) {
         try {
             float scale = webView.getScale();
@@ -316,29 +342,111 @@ public class EditorActivity extends AppCompatActivity {
         return null;
     }
 
-    public static Bitmap screenshot2(WebView webView) {
-        webView.measure(View.MeasureSpec.makeMeasureSpec(
-                View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED),
-                View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-        webView.layout(0, 0, webView.getMeasuredWidth(), webView.getMeasuredHeight());
-        webView.setDrawingCacheEnabled(true);
-        webView.buildDrawingCache();
-        Bitmap bitmap = Bitmap.createBitmap(webView.getMeasuredWidth(),
-                webView.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
+    /**
+     * Save bitmap in SD card in png format
+     *
+     * @return Path to the image
+     */
+    private String saveBitmap2Picture() {
+        Bitmap b = screenshot(webView);
+        String path = null;
+        try {
+            if (b != null) {
+                File destDir = new File(Environment.getExternalStorageDirectory()
+                        + File.separator
+                        + "Whriter"
+                        + File.separator
+                        + "Image");
+                if (!destDir.exists()) {
+                    destDir.mkdirs();
+                }
+                path = Environment.getExternalStorageDirectory()
+                        + File.separator
+                        + "Whriter"
+                        + File.separator
+                        + "Image"
+                        + File.separator
+                        + new Date().toString() + ".png";
+                b.compress(Bitmap.CompressFormat.JPEG, 95, new FileOutputStream(path));
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 
-        Canvas canvas = new Canvas(bitmap);
-        Paint paint = new Paint();
-        int iHeight = bitmap.getHeight();
-        canvas.drawBitmap(bitmap, 0, iHeight, paint);
-        webView.draw(canvas);
-        return bitmap;
+        return path;
+    }
+
+    /**
+     * Return the json value of editor content of user's article
+     *
+     * @param params JSON format content
+     * @return
+     */
+    private Map<String, String> getEditorContent(String params) {
+        final Map<String, String> map = new HashMap<>();
+        try {
+            JSONObject jsonObj = new JSONObject(params);
+            String key;
+            String value;
+            Iterator<String> i = jsonObj.keys();
+            while (i.hasNext()) {
+                key = i.next();
+                value = jsonObj.getString(key);
+                map.put(key, value);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return map;
+    }
+
+    @OnClick(R.id.fab)
+    void setFab() {
+        fabToolbar.expandFab();
+    }
+
+    @OnClick(R.id.button_delete)
+    void setDeleteBtn() {
+        icarus.setContent("");
+    }
+
+    @OnClick(R.id.button_share)
+    void setShareBtn() {
+        drawerLayout.closeDrawers();
+        new BottomSheet.Builder(EditorActivity.this)
+                .title(R.string.share)
+                .sheet(R.menu.menu_share)
+                .listener(new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch (which) {
+                            case R.id.share_text:
+                                sharePlainText();
+                                break;
+                            case R.id.share_picture:
+                                if (ContextCompat.checkSelfPermission(EditorActivity.this
+                                        , Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    ActivityCompat.requestPermissions(EditorActivity.this
+                                            , new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
+                                            , WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                                } else {
+                                    shareImage();
+                                }
+                                break;
+                            case R.id.share_html:
+                                shareHTMLText();
+                                break;
+                        }
+                    }
+                }).show();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         Log.i(TAG, "onRequestPermissionsResult: ");
-        doNext(requestCode, grantResults);
+        shareImageHavingPermission(requestCode, grantResults);
     }
 
     @Override
@@ -355,10 +463,10 @@ public class EditorActivity extends AppCompatActivity {
         }
         check();
         setContentView(R.layout.activity_editor);
+        ButterKnife.bind(this);
         setUpToolbar((Toolbar) findViewById(R.id.toolbar));
         setUpContent();
         setUpEditor();
-        setUpDrawerButtons();
     }
 
 
@@ -440,12 +548,6 @@ public class EditorActivity extends AppCompatActivity {
         toolbar.addButton(fontScaleButton);
         return toolbar;
     }
-
-//    @Override
-//    protected void attachBaseContext(Context newBase) {
-//        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
-//    }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {

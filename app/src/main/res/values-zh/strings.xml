@@ -15,4 +15,27 @@
     <string name="share">分享为…</string>
     <string name="share_html">HTML</string>
     <string name="share_picture">图片</string>
+    <string name="about">关于</string>
+    <string name="about_us">关于我们</string>
+    <string name="clear_all">清除所有文档</string>
+    <string name="feedback">发送反馈</string>
+    <string name="finger_sum">你仍然可以使用密码解锁</string>
+    <string name="fingerprint">指纹解锁</string>
+    <string name="general">通用</string>
+    <string name="help">帮助</string>
+    <string name="helpfeed">帮助与反馈</string>
+    <string name="lock_screen">屏幕锁定</string>
+    <string name="lock_sum">密码</string>
+    <string name="relock">重新锁定应用</string>
+    <string name="relock_sum">立刻</string>
+    <string name="security">安全性</string>
+    <string name="share_text">纯文字</string>
+    <string name="use_lock">打开应用时锁定屏幕</string>
+    <string name="use_sum">防止你的私人文档泄漏</string>
+    <string name="version">版本</string>
+    <string name="article">文档</string>
+    <string name="folder">文件夹</string>
+    <string name="share_to">分享到...</string>
+    <string name="save_to">已保存至</string>
+    <string name="form_whriter">来自Whriter</string>
 </resources>

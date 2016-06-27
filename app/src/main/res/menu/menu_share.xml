@@ -2,8 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/share_html"
+        android:icon="@drawable/ic_code_black_24dp"
         android:title="@string/share_html"/>
     <item
+        android:id="@+id/share_text"
+        android:icon="@drawable/ic_format_align_left_black_24dp"
+        android:title="@string/share_text"/>
+    <item
         android:id="@+id/share_picture"
+        android:icon="@drawable/ic_insert_photo_black_24dp"
         android:title="@string/share_picture"/>
 </menu>

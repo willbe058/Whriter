@@ -109,7 +109,7 @@
             android:src="@drawable/ic_insert_drive_file_white_18dp"
             app:fab_colorNormal="@color/colorFab"
             app:fab_colorPressed="@color/colorFabPressed"
-            fab:fab_label="Article"
+            fab:fab_label="@string/article"
             fab:fab_size="mini"/>
 
         <com.github.clans.fab.FloatingActionButton
@@ -119,7 +119,7 @@
             android:src="@drawable/ic_folder_white_18dp"
             app:fab_colorNormal="@color/colorFab"
             app:fab_colorPressed="@color/colorFabPressed"
-            fab:fab_label="Folder"
+            fab:fab_label="@string/folder"
             fab:fab_size="mini"/>
     </com.github.clans.fab.FloatingActionMenu>
 

@@ -5,6 +5,9 @@
     <!--Editor-->
     <string name="place_holder_text">Your word, your thought…</string>
     <string name="saved">Saved </string>
+    <string name="share_to">Share to…</string>
+    <string name="save_to">Saved in </string>
+    <string name="form_whriter">From Whriter</string>
     <!--Home-->
     <string name="title">Title</string>
     <string name="title_not_null">Title can not be null</string>
@@ -16,7 +19,10 @@
     <string name="rename_title">Rename</string>
     <string name="share">Share to…</string>
     <string name="share_html">HTML</string>
+    <string name="share_text">Plain text</string>
     <string name="share_picture">Picture</string>
+    <string name="article">Article</string>
+    <string name="folder">Folder</string>
     <!--Settings-->
     <string name="general">General</string>
     <string name="clear_all">Clear all files</string>

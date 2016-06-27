@@ -25,10 +25,15 @@ import com.xpf.me.whriter.common.RealmProvider;
 import com.xpf.me.whriter.editor.EditorActivity;
 import com.xpf.me.whriter.event.BusProvider;
 import com.xpf.me.whriter.model.WhriterFile;
+import com.yarolegovich.lovelydialog.LovelyInfoDialog;
+import com.yarolegovich.lovelydialog.LovelyStandardDialog;
 import com.yarolegovich.lovelydialog.LovelyTextInputDialog;
 
 import java.util.UUID;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.realm.Realm;
 import io.realm.RealmChangeListener;
 import io.realm.RealmResults;
@@ -41,17 +46,30 @@ public class FilesFragment extends Fragment {
 
     private static final String TAG = FilesFragment.class.getName();
 
-    private ContentLoadingProgressBar progressBar;
-    private FloatingActionMenu floatingActionMenu;
-    private FloatingActionButton fileFab, folderFab;
-    private RecyclerView recyclerView;
-    private FilesAdapter adapter;
-    private View emptyView;
-    private ImageView emptyFolderView;
-    private View coorLayout;
-    private View longClickView;
-    private View deleteButton, renameButton;
+    @BindView(R.id.progress)
+    ContentLoadingProgressBar progressBar;
+    @BindView(R.id.menu)
+    FloatingActionMenu floatingActionMenu;
+    @BindView(R.id.add_file)
+    FloatingActionButton fileFab;
+    @BindView(R.id.add_folder)
+    FloatingActionButton folderFab;
+    @BindView(R.id.recyclerView)
+    RecyclerView recyclerView;
+    @BindView(R.id.empty_view)
+    View emptyView;
+    @BindView(R.id.empty_folder)
+    ImageView emptyFolderView;
+    @BindView(R.id.list_container)
+    View coorLayout;
+    @BindView(R.id.view_long_click)
+    View longClickView;
+    @BindView(R.id.delete_container)
+    View deleteButton;
+    @BindView(R.id.rename_container)
+    View renameButton;
 
+    private FilesAdapter adapter;
     private WhriterFile mCurrentFolder;
     private RealmResults<WhriterFile> currentFolderResults;
     private WhriterFile mChosenFile;
@@ -61,76 +79,7 @@ public class FilesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_filelist, container, false);
-        progressBar = (ContentLoadingProgressBar) root.findViewById(R.id.progress);
-        recyclerView = (RecyclerView) root.findViewById(R.id.recyclerView);
-        fileFab = (FloatingActionButton) root.findViewById(R.id.add_file);
-        folderFab = (FloatingActionButton) root.findViewById(R.id.add_folder);
-        floatingActionMenu = (FloatingActionMenu) root.findViewById(R.id.menu);
-        emptyView = root.findViewById(R.id.empty_view);
-        emptyFolderView = (ImageView) root.findViewById(R.id.empty_folder);
-        coorLayout = root.findViewById(R.id.list_container);
-        longClickView = root.findViewById(R.id.view_long_click);
-        deleteButton = root.findViewById(R.id.delete_container);
-        renameButton = root.findViewById(R.id.rename_container);
-
-        longClickView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(final View v) {
-
-                generateAnimator(v).start();
-            }
-        });
-        deleteButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mChosenFile != null) {
-                    RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
-                        @Override
-                        public void execute(Realm realm) {
-                            mChosenFile.deleteFromRealm();
-                            generateAnimator(longClickView).start();
-                        }
-                    });
-                }
-            }
-        });
-        renameButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mChosenFile != null) {
-                    generateAnimator(longClickView).start();
-                    RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
-                        @Override
-                        public void execute(Realm realm) {
-                            new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                                    .setTitle(AppData.getString(R.string.rename_title))
-                                    .setInitialInput(mChosenFile.getTitle())
-                                    .setIcon(R.drawable.ic_mode_edit_white_24dp)
-                                    .setTopColorRes(R.color.colorFab)
-                                    .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
-                                        @Override
-                                        public void onTextInputConfirmed(final String text) {
-                                            RealmProvider
-                                                    .getInstance()
-                                                    .getRealm()
-                                                    .executeTransaction(new Realm.Transaction() {
-                                                        @Override
-                                                        public void execute(Realm realm) {
-                                                            mChosenFile.setTitle(text);
-                                                            realm.copyToRealm(mChosenFile);
-                                                        }
-                                                    });
-                                        }
-                                    })
-                                    .show();
-
-                        }
-                    });
-                }
-            }
-        });
-
-        floatingActionMenu.setClosedOnTouchOutside(true);
+        ButterKnife.bind(this, root);
         RealmResults<WhriterFile> realmResults = RealmProvider.getInstance()
                 .getRealm()
                 .where(WhriterFile.class)
@@ -190,106 +139,21 @@ public class FilesFragment extends Fragment {
                 longClickView.animate().alpha(1);
                 longClickView.setTranslationY(50);
                 longClickView.animate().translationY(0);
-            }
-        });
-        GridLayoutManager layoutManager = new GridLayoutManager(getActivity(), 1, LinearLayoutManager.VERTICAL, false);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setAdapter(adapter);
 
-        fileFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                floatingActionMenu.close(true);
-                new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                        .setTitle(AppData.getString(R.string.title))
-                        .setIcon(R.drawable.ic_mode_edit_white_24dp)
-                        .setTopColorRes(R.color.colorFab)
-                        .setInputFilter(AppData.getString(R.string.title_not_null), new LovelyTextInputDialog.TextFilter() {
-                            @Override
-                            public boolean check(String text) {
-                                return !text.isEmpty();
-                            }
-                        })
-                        .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
-                            @Override
-                            public void onTextInputConfirmed(String text) {
-                                if (mCurrentFolder != null) {
-                                    RealmProvider.getInstance().getRealm().beginTransaction();
-                                    mCurrentFolder.setCreateDate(System.currentTimeMillis());
-                                    RealmProvider.getInstance().getRealm().commitTransaction();
-                                }
-                                final WhriterFile file = new WhriterFile();
-                                file.setId(UUID.randomUUID().toString());
-                                file.setFile(true);
-                                file.setTitle(text);
-                                file.setRoot(mCurrentFolder == null);
-                                file.setCurrentFolder(mCurrentFolder);
-                                file.setCreateDate(System.currentTimeMillis());
-                                file.setPreviousFolder(mCurrentFolder == null
-                                        ? null
-                                        : mCurrentFolder.getCurrentFolder());
-                                RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
-                                    @Override
-                                    public void execute(Realm realm) {
-                                        realm.copyToRealm(file);
-                                    }
-                                });
-                            }
-                        })
-                        .show();
             }
         });
 
-        folderFab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                floatingActionMenu.close(true);
-                new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                        .setTitle(AppData.getString(R.string.name))
-                        .setIcon(R.drawable.ic_folder_white_24dp)
-                        .setTopColorRes(R.color.colorFab)
-                        .setInputFilter(AppData.getString(R.string.name_not_null), new LovelyTextInputDialog.TextFilter() {
-                            @Override
-                            public boolean check(String text) {
-                                return !text.isEmpty();
-                            }
-                        })
-                        .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
-                            @Override
-                            public void onTextInputConfirmed(String text) {
-                                if (mCurrentFolder != null) {
-                                    RealmProvider.getInstance().getRealm().beginTransaction();
-                                    mCurrentFolder.setCreateDate(System.currentTimeMillis());
-                                    RealmProvider.getInstance().getRealm().commitTransaction();
-                                }
-                                final WhriterFile file = new WhriterFile();
-                                file.setId(UUID.randomUUID().toString());
-                                file.setFile(false);
-                                file.setRoot(mCurrentFolder == null);
-                                file.setTitle(text);
-                                file.setCreateDate(System.currentTimeMillis());
-                                file.setCurrentFolder(mCurrentFolder);
-                                file.setPreviousFolder(mCurrentFolder == null
-                                        ? null
-                                        : mCurrentFolder.getCurrentFolder());
-                                RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
-                                    @Override
-                                    public void execute(Realm realm) {
-                                        realm.copyToRealm(file);
-                                    }
-                                });
-                            }
-                        })
-                        .show();
-            }
-        });
         return root;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        floatingActionMenu.setClosedOnTouchOutside(true);
+        GridLayoutManager layoutManager = new GridLayoutManager(getActivity(), 1, LinearLayoutManager.VERTICAL, false);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(adapter);
         progressBar.show();
     }
 
@@ -306,6 +170,159 @@ public class FilesFragment extends Fragment {
         if (currentFolderResults != null) {
             currentFolderResults.removeChangeListeners();
         }
+    }
+
+    @OnClick(R.id.view_long_click)
+    void setLongClickView(View v) {
+        generateAnimator(v).start();
+
+    }
+
+    @OnClick(R.id.delete_container)
+    void setDeleteButton() {
+        if (mChosenFile != null) {
+            generateAnimator(longClickView).start();
+            new LovelyStandardDialog(getActivity(), R.style.EditTextDialogTheme)
+                    .setTitle(AppData.getString(R.string.delete))
+                    .setIcon(R.drawable.ic_delete_white_24dp)
+                    .setTopColorRes(android.R.color.holo_red_dark)
+                    .setCancelable(true)
+                    .setPositiveButton(android.R.string.ok, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
+                                @Override
+                                public void execute(Realm realm) {
+                                    mChosenFile.deleteFromRealm();
+                                }
+                            });
+                        }
+                    })
+                    .setNegativeButton(android.R.string.cancel, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                        }
+                    })
+                    .show();
+        }
+    }
+
+    @OnClick(R.id.rename_container)
+    void setRenameButton() {
+        if (mChosenFile != null) {
+            generateAnimator(longClickView).start();
+            RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
+                    new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
+                            .setTitle(AppData.getString(R.string.rename_title))
+                            .setInitialInput(mChosenFile.getTitle())
+                            .setIcon(R.drawable.ic_mode_edit_white_24dp)
+                            .setTopColorRes(R.color.colorFab)
+                            .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
+                                @Override
+                                public void onTextInputConfirmed(final String text) {
+                                    RealmProvider
+                                            .getInstance()
+                                            .getRealm()
+                                            .executeTransaction(new Realm.Transaction() {
+                                                @Override
+                                                public void execute(Realm realm) {
+                                                    mChosenFile.setTitle(text);
+                                                    realm.copyToRealm(mChosenFile);
+                                                }
+                                            });
+                                }
+                            })
+                            .show();
+
+                }
+            });
+        }
+    }
+
+    @OnClick(R.id.add_file)
+    void setFileFab() {
+        floatingActionMenu.close(true);
+        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
+                .setTitle(AppData.getString(R.string.title))
+                .setIcon(R.drawable.ic_mode_edit_white_24dp)
+                .setTopColorRes(R.color.colorFab)
+                .setInputFilter(AppData.getString(R.string.title_not_null), new LovelyTextInputDialog.TextFilter() {
+                    @Override
+                    public boolean check(String text) {
+                        return !text.isEmpty();
+                    }
+                })
+                .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
+                    @Override
+                    public void onTextInputConfirmed(String text) {
+                        if (mCurrentFolder != null) {
+                            RealmProvider.getInstance().getRealm().beginTransaction();
+                            mCurrentFolder.setCreateDate(System.currentTimeMillis());
+                            RealmProvider.getInstance().getRealm().commitTransaction();
+                        }
+                        final WhriterFile file = new WhriterFile();
+                        file.setId(UUID.randomUUID().toString());
+                        file.setFile(true);
+                        file.setTitle(text);
+                        file.setRoot(mCurrentFolder == null);
+                        file.setCurrentFolder(mCurrentFolder);
+                        file.setCreateDate(System.currentTimeMillis());
+                        file.setPreviousFolder(mCurrentFolder == null
+                                ? null
+                                : mCurrentFolder.getCurrentFolder());
+                        RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
+                            @Override
+                            public void execute(Realm realm) {
+                                realm.copyToRealm(file);
+                            }
+                        });
+                    }
+                })
+                .show();
+    }
+
+    @OnClick(R.id.add_folder)
+    void setFolderFab() {
+        floatingActionMenu.close(true);
+        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
+                .setTitle(AppData.getString(R.string.name))
+                .setIcon(R.drawable.ic_folder_white_24dp)
+                .setTopColorRes(R.color.colorFab)
+                .setInputFilter(AppData.getString(R.string.name_not_null), new LovelyTextInputDialog.TextFilter() {
+                    @Override
+                    public boolean check(String text) {
+                        return !text.isEmpty();
+                    }
+                })
+                .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
+                    @Override
+                    public void onTextInputConfirmed(String text) {
+                        if (mCurrentFolder != null) {
+                            RealmProvider.getInstance().getRealm().beginTransaction();
+                            mCurrentFolder.setCreateDate(System.currentTimeMillis());
+                            RealmProvider.getInstance().getRealm().commitTransaction();
+                        }
+                        final WhriterFile file = new WhriterFile();
+                        file.setId(UUID.randomUUID().toString());
+                        file.setFile(false);
+                        file.setRoot(mCurrentFolder == null);
+                        file.setTitle(text);
+                        file.setCreateDate(System.currentTimeMillis());
+                        file.setCurrentFolder(mCurrentFolder);
+                        file.setPreviousFolder(mCurrentFolder == null
+                                ? null
+                                : mCurrentFolder.getCurrentFolder());
+                        RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
+                            @Override
+                            public void execute(Realm realm) {
+                                realm.copyToRealm(file);
+                            }
+                        });
+                    }
+                })
+                .show();
     }
 
     private Animator generateAnimator(final View view) {
@@ -337,6 +354,11 @@ public class FilesFragment extends Fragment {
         return animator;
     }
 
+    /**
+     * Hook the activity back button, aim to make navigation correct and clear.
+     *
+     * @return
+     */
     public boolean onBackPressed() {
         if (!backEnable) {
             generateAnimator(longClickView).start();
@@ -390,4 +412,6 @@ public class FilesFragment extends Fragment {
         });
         return true;
     }
+
+
 }
