@@ -8,6 +8,12 @@
     <string name="share_to">Share to…</string>
     <string name="save_to">Saved in </string>
     <string name="form_whriter">From Whriter</string>
+    <string name="clear">Clear all content?</string>
+    <string name="detail">Details</string>
+    <string name="title_info">Name</string>
+    <string name="count">Count</string>
+    <string name="modify_date">Last modified</string>
+    <string name="create_date">Create at</string>
     <!--Home-->
     <string name="title">Title</string>
     <string name="title_not_null">Title can not be null</string>
@@ -41,4 +47,6 @@
     <string name="about">About</string>
     <string name="about_us">About us</string>
     <string name="version">Version</string>
+    <string name="regenera">Re-generate help documents for you</string>
+    <string name="rege_sum">Check the help documents again in case of you forgot some details</string>
 </resources>

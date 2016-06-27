@@ -26,6 +26,7 @@ import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebSettings;
@@ -74,14 +75,19 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.realm.Realm;
+import tk.zielony.naturaldateformat.AbsoluteDateFormat;
+import tk.zielony.naturaldateformat.NaturalDateFormat;
 
 import com.github.mr5.icarus.button.Button;
+import com.yarolegovich.lovelydialog.LovelyCustomDialog;
+import com.yarolegovich.lovelydialog.LovelyStandardDialog;
 
 /**
  * Created by pengfeixie on 16/5/23.
  */
-public class EditorActivity extends AppCompatActivity {
+public class EditorActivity extends AppCompatActivity implements Shareable {
 
+    // TODO: 16/6/27 import text 
     private static final String TAG = EditorActivity.class.getName();
     private static final String EXTRA_ID = "file_id";
     private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
@@ -100,6 +106,8 @@ public class EditorActivity extends AppCompatActivity {
     ImageButton shareBtn;
     @BindView(R.id.button_delete)
     ImageButton deleteBtn;
+    @BindView(R.id.button_info)
+    ImageButton infoBtn;
 
     private ActionBarDrawerToggle toggle;
     private Icarus icarus;
@@ -172,6 +180,7 @@ public class EditorActivity extends AppCompatActivity {
      */
     private void setUpEditor() {
         titleEdit.setText(mFile.getTitle());
+        titleEdit.requestFocus();
         webView.setOnScrollChangedCallback(new ObservableWebView.OnScrollChangedCallback() {
             @Override
             public void onScroll(int dx, int dy) {
@@ -222,6 +231,37 @@ public class EditorActivity extends AppCompatActivity {
                 + AppData.getString(R.string.form_whriter);
     }
 
+    public static String clean(String bodyHtml) {
+        // get plain text with preserved line breaks by disabled prettyPrint
+        String temp = Jsoup.clean(bodyHtml
+                , ""
+                , Whitelist.none()
+                , new Document.OutputSettings().prettyPrint(false));
+        return temp.replace("&nbsp;", " ");
+    }
+
+    private static float countWords(String str) {
+        if (str == null || str.length() <= 0) {
+            return 0;
+        }
+        float len = 0;
+        char c;
+        for (int i = str.length() - 1; i >= 0; i--) {
+            c = str.charAt(i);
+            if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+                // 字母, 数字
+                len += 0.5;
+            } else {
+                if (Character.isLetter(c)) { // 中文
+                    len++;
+                } else { // 符号或控制字符
+                    len += 0.5;
+                }
+            }
+        }
+        return len;
+    }
+
     /**
      * Share text through system share
      *
@@ -264,50 +304,6 @@ public class EditorActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(shareIntent, AppData.getString(R.string.share_to)));
     }
 
-    private void sharePlainText() {
-        icarus.getContent(new Callback() {
-            @Override
-            public void run(String params) {
-                shareText(cleanPreserveLineBreaks(getEditorContent(params).get("content")));
-            }
-        });
-    }
-
-    private void shareHTMLText() {
-        icarus.getContent(new Callback() {
-            @Override
-            public void run(String params) {
-                shareText(getEditorContent(params).get("content")
-                        + "\n\n"
-                        + AppData.getString(R.string.form_whriter));
-            }
-        });
-    }
-
-    /**
-     * Share the image of the content of the editor
-     */
-    public void shareImage() {
-        //save and get the path of image
-        String imagePath = saveBitmap2Picture();
-
-        if (imagePath != null) {
-            Toast.makeText(this, AppData.getString(R.string.save_to)
-                    + Environment.getExternalStorageDirectory()
-                    + File.separator
-                    + "Whriter"
-                    + File.separator
-                    + "Image", Toast.LENGTH_LONG).show();
-            //use the path to get uri
-            Uri imageUri = Uri.fromFile(new File(imagePath));
-            //then share with uri
-            Intent shareIntent = new Intent();
-            shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
-            shareIntent.setType("image/*");
-            startActivity(Intent.createChooser(shareIntent, AppData.getString(R.string.share_to)));
-        }
-    }
 
     private void shareImageHavingPermission(int requestCode, int[] grantResults) {
         if (requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE) {
@@ -407,7 +403,30 @@ public class EditorActivity extends AppCompatActivity {
 
     @OnClick(R.id.button_delete)
     void setDeleteBtn() {
-        icarus.setContent("");
+        drawerLayout.closeDrawers();
+        new LovelyStandardDialog(this, R.style.EditTextDialogTheme)
+                .setTitle(AppData.getString(R.string.clear))
+                .setIcon(R.drawable.ic_delete_white_24dp)
+                .setTopColorRes(android.R.color.holo_red_dark)
+                .setCancelable(true)
+                .setPositiveButtonColorRes(android.R.color.holo_red_dark)
+                .setPositiveButton(android.R.string.ok, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
+                            @Override
+                            public void execute(Realm realm) {
+                                icarus.setContent("");
+                            }
+                        });
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                    }
+                })
+                .show();
     }
 
     @OnClick(R.id.button_share)
@@ -421,7 +440,15 @@ public class EditorActivity extends AppCompatActivity {
                     public void onClick(DialogInterface dialog, int which) {
                         switch (which) {
                             case R.id.share_text:
-                                sharePlainText();
+                                if (ContextCompat.checkSelfPermission(EditorActivity.this
+                                        , Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    ActivityCompat.requestPermissions(EditorActivity.this
+                                            , new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
+                                            , WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                                } else {
+                                    sharePlainText();
+                                }
                                 break;
                             case R.id.share_picture:
                                 if (ContextCompat.checkSelfPermission(EditorActivity.this
@@ -435,11 +462,102 @@ public class EditorActivity extends AppCompatActivity {
                                 }
                                 break;
                             case R.id.share_html:
-                                shareHTMLText();
+                                if (ContextCompat.checkSelfPermission(EditorActivity.this
+                                        , Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                                        != PackageManager.PERMISSION_GRANTED) {
+                                    ActivityCompat.requestPermissions(EditorActivity.this
+                                            , new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}
+                                            , WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+                                } else {
+                                    shareHTMLText();
+                                }
                                 break;
                         }
                     }
                 }).show();
+    }
+
+    @OnClick(R.id.button_info)
+    void setInfoBtn() {
+        // TODO: 16/6/27 count
+        drawerLayout.closeDrawers();
+        final String titleStr = mFile.getTitle();
+        final long createDate = mFile.getCreateDate();
+        final long modifyDate = mFile.getModifyDate();
+        final View infoView = LayoutInflater.from(EditorActivity.this).inflate(R.layout.dialog_info, null);
+        final TextView title = (TextView) infoView.findViewById(R.id.title_filed);
+        final TextView count = (TextView) infoView.findViewById(R.id.count_field);
+        final TextView modified = (TextView) infoView.findViewById(R.id.modify_field);
+        final TextView create = (TextView) infoView.findViewById(R.id.create_field);
+        icarus.getContent(new Callback() {
+            @Override
+            public void run(String params) {
+                final float c = countWords(clean(getEditorContent(params).get("content")));
+                title.setText(titleStr);
+                count.setText(c + " ");
+                AbsoluteDateFormat d = new AbsoluteDateFormat(EditorActivity.this
+                        , NaturalDateFormat.DATE
+                        | NaturalDateFormat.HOURS
+                        | NaturalDateFormat.MINUTES
+                        | NaturalDateFormat.SECONDS);
+                modified.setText(d.format(modifyDate));
+                create.setText(d.format(createDate));
+                new LovelyCustomDialog(EditorActivity.this)
+                        .setView(infoView)
+                        .setTopColorRes(R.color.colorFab)
+                        .setIcon(R.drawable.ic_info_white_24dp)
+                        .show();
+            }
+        });
+
+    }
+
+    @Override
+    public void sharePlainText() {
+        icarus.getContent(new Callback() {
+            @Override
+            public void run(String params) {
+                shareText(cleanPreserveLineBreaks(getEditorContent(params).get("content")));
+            }
+        });
+    }
+
+    @Override
+    public void shareHTMLText() {
+        icarus.getContent(new Callback() {
+            @Override
+            public void run(String params) {
+                shareText(getEditorContent(params).get("content")
+                        + "\n\n"
+                        + AppData.getString(R.string.form_whriter));
+            }
+        });
+    }
+
+    /**
+     * Share the image of the content of the editor
+     */
+    @Override
+    public void shareImage() {
+        //save and get the path of image
+        String imagePath = saveBitmap2Picture();
+
+        if (imagePath != null) {
+            Toast.makeText(this, AppData.getString(R.string.save_to)
+                    + Environment.getExternalStorageDirectory()
+                    + File.separator
+                    + "Whriter"
+                    + File.separator
+                    + "Image", Toast.LENGTH_LONG).show();
+            //use the path to get uri
+            Uri imageUri = Uri.fromFile(new File(imagePath));
+            //then share with uri
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_SEND);
+            shareIntent.putExtra(Intent.EXTRA_STREAM, imageUri);
+            shareIntent.setType("image/*");
+            startActivity(Intent.createChooser(shareIntent, AppData.getString(R.string.share_to)));
+        }
     }
 
     @Override
@@ -571,7 +689,7 @@ public class EditorActivity extends AppCompatActivity {
             final String id = mFile.getId();
             if (mFile.getCurrentFolder() != null) {
                 RealmProvider.getInstance().getRealm().beginTransaction();
-                mFile.getCurrentFolder().setCreateDate(System.currentTimeMillis());
+                mFile.getCurrentFolder().setModifyDate(System.currentTimeMillis());
                 RealmProvider.getInstance().getRealm().commitTransaction();
             }
             icarus.getContent(new Callback() {
@@ -606,7 +724,7 @@ public class EditorActivity extends AppCompatActivity {
                             mFile.setContent(map.get("content"));
                             String preview = HTMLUtil.removeTag(map.get("content"));
                             mFile.setPreview(preview.length() > 30 ? preview.substring(0, 29) : preview);
-                            mFile.setCreateDate(System.currentTimeMillis());
+                            mFile.setModifyDate(System.currentTimeMillis());
                             realm.copyToRealmOrUpdate(mFile);
                         }
                     });

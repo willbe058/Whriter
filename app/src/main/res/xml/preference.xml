@@ -30,6 +30,10 @@
             android:title="@string/help"
             />
         <com.jenzz.materialpreference.Preference
+            android:key="regenera"
+            android:summary="@string/rege_sum"
+            android:title="@string/regenera"/>
+        <com.jenzz.materialpreference.Preference
             android:key="feed_key"
             android:title="@string/feedback"/>
     </com.jenzz.materialpreference.PreferenceCategory>
@@ -39,7 +43,7 @@
             android:title="@string/about_us"/>
         <com.jenzz.materialpreference.Preference
             android:key="version_key"
-            android:title="@string/version"
-            android:summary="0.6.1"/>
+            android:summary="0.6.1"
+            android:title="@string/version"/>
     </com.jenzz.materialpreference.PreferenceCategory>
 </PreferenceScreen>

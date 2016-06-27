@@ -18,6 +18,8 @@ public class WhriterFile extends RealmObject implements Serializable {
 
     private long createDate;
 
+    private long modifyDate;
+
     private WhriterFile currentFolder;
 
     private WhriterFile previousFolder;
@@ -38,6 +40,14 @@ public class WhriterFile extends RealmObject implements Serializable {
 
     public void setRoot(boolean root) {
         isRoot = root;
+    }
+
+    public long getModifyDate() {
+        return modifyDate;
+    }
+
+    public void setModifyDate(long modifyDate) {
+        this.modifyDate = modifyDate;
     }
 
     private RealmList<WhriterFile> children;

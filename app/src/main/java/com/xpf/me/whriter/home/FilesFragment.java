@@ -3,7 +3,6 @@ package com.xpf.me.whriter.home;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.ContentLoadingProgressBar;
@@ -13,9 +12,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewPropertyAnimator;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
@@ -25,7 +22,6 @@ import com.xpf.me.whriter.common.RealmProvider;
 import com.xpf.me.whriter.editor.EditorActivity;
 import com.xpf.me.whriter.event.BusProvider;
 import com.xpf.me.whriter.model.WhriterFile;
-import com.yarolegovich.lovelydialog.LovelyInfoDialog;
 import com.yarolegovich.lovelydialog.LovelyStandardDialog;
 import com.yarolegovich.lovelydialog.LovelyTextInputDialog;
 
@@ -84,7 +80,7 @@ public class FilesFragment extends Fragment {
                 .getRealm()
                 .where(WhriterFile.class)
                 .equalTo("isRoot", true)
-                .findAllSortedAsync("createDate", Sort.DESCENDING);
+                .findAllSortedAsync("modifyDate", Sort.DESCENDING);
         realmResults.addChangeListener(new RealmChangeListener<RealmResults<WhriterFile>>() {
             @Override
             public void onChange(RealmResults<WhriterFile> element) {
@@ -111,7 +107,7 @@ public class FilesFragment extends Fragment {
                                 .getRealm()
                                 .where(WhriterFile.class)
                                 .equalTo("currentFolder.id", file.getId())
-                                .findAllSortedAsync("createDate", Sort.DESCENDING);
+                                .findAllSortedAsync("modifyDate", Sort.DESCENDING);
                 currentFolderResults.addChangeListener(new RealmChangeListener<RealmResults<WhriterFile>>() {
                     @Override
                     public void onChange(RealmResults<WhriterFile> element) {
@@ -175,7 +171,6 @@ public class FilesFragment extends Fragment {
     @OnClick(R.id.view_long_click)
     void setLongClickView(View v) {
         generateAnimator(v).start();
-
     }
 
     @OnClick(R.id.delete_container)
@@ -187,12 +182,16 @@ public class FilesFragment extends Fragment {
                     .setIcon(R.drawable.ic_delete_white_24dp)
                     .setTopColorRes(android.R.color.holo_red_dark)
                     .setCancelable(true)
+                    .setPositiveButtonColorRes(android.R.color.holo_red_dark)
                     .setPositiveButton(android.R.string.ok, new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
                                 @Override
                                 public void execute(Realm realm) {
+                                    while (mChosenFile.getChildren().size() != 0) {
+                                        mChosenFile.getChildren().deleteAllFromRealm();
+                                    }
                                     mChosenFile.deleteFromRealm();
                                 }
                             });
@@ -219,6 +218,12 @@ public class FilesFragment extends Fragment {
                             .setInitialInput(mChosenFile.getTitle())
                             .setIcon(R.drawable.ic_mode_edit_white_24dp)
                             .setTopColorRes(R.color.colorFab)
+                            .setInputFilter(AppData.getString(R.string.title_not_null), new LovelyTextInputDialog.TextFilter() {
+                                @Override
+                                public boolean check(String text) {
+                                    return !text.isEmpty();
+                                }
+                            })
                             .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
                                 @Override
                                 public void onTextInputConfirmed(final String text) {
@@ -244,22 +249,18 @@ public class FilesFragment extends Fragment {
     @OnClick(R.id.add_file)
     void setFileFab() {
         floatingActionMenu.close(true);
-        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                .setTitle(AppData.getString(R.string.title))
-                .setIcon(R.drawable.ic_mode_edit_white_24dp)
-                .setTopColorRes(R.color.colorFab)
-                .setInputFilter(AppData.getString(R.string.title_not_null), new LovelyTextInputDialog.TextFilter() {
-                    @Override
-                    public boolean check(String text) {
-                        return !text.isEmpty();
-                    }
-                })
-                .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
+        showInputDialog(
+                R.string.title
+                , R.drawable.ic_mode_edit_white_24dp
+                , R.color.colorFab
+                , R.string.title_not_null
+                , android.R.string.ok
+                , new LovelyTextInputDialog.OnTextInputConfirmListener() {
                     @Override
                     public void onTextInputConfirmed(String text) {
                         if (mCurrentFolder != null) {
                             RealmProvider.getInstance().getRealm().beginTransaction();
-                            mCurrentFolder.setCreateDate(System.currentTimeMillis());
+                            mCurrentFolder.setModifyDate(System.currentTimeMillis());
                             RealmProvider.getInstance().getRealm().commitTransaction();
                         }
                         final WhriterFile file = new WhriterFile();
@@ -269,6 +270,7 @@ public class FilesFragment extends Fragment {
                         file.setRoot(mCurrentFolder == null);
                         file.setCurrentFolder(mCurrentFolder);
                         file.setCreateDate(System.currentTimeMillis());
+                        file.setModifyDate(System.currentTimeMillis());
                         file.setPreviousFolder(mCurrentFolder == null
                                 ? null
                                 : mCurrentFolder.getCurrentFolder());
@@ -279,29 +281,25 @@ public class FilesFragment extends Fragment {
                             }
                         });
                     }
-                })
-                .show();
+                }
+        );
     }
 
     @OnClick(R.id.add_folder)
     void setFolderFab() {
         floatingActionMenu.close(true);
-        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                .setTitle(AppData.getString(R.string.name))
-                .setIcon(R.drawable.ic_folder_white_24dp)
-                .setTopColorRes(R.color.colorFab)
-                .setInputFilter(AppData.getString(R.string.name_not_null), new LovelyTextInputDialog.TextFilter() {
-                    @Override
-                    public boolean check(String text) {
-                        return !text.isEmpty();
-                    }
-                })
-                .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
+        showInputDialog(
+                R.string.name
+                , R.drawable.ic_folder_white_24dp
+                , R.color.colorFab
+                , R.string.name_not_null
+                , android.R.string.ok
+                , new LovelyTextInputDialog.OnTextInputConfirmListener() {
                     @Override
                     public void onTextInputConfirmed(String text) {
                         if (mCurrentFolder != null) {
                             RealmProvider.getInstance().getRealm().beginTransaction();
-                            mCurrentFolder.setCreateDate(System.currentTimeMillis());
+                            mCurrentFolder.setModifyDate(System.currentTimeMillis());
                             RealmProvider.getInstance().getRealm().commitTransaction();
                         }
                         final WhriterFile file = new WhriterFile();
@@ -310,6 +308,7 @@ public class FilesFragment extends Fragment {
                         file.setRoot(mCurrentFolder == null);
                         file.setTitle(text);
                         file.setCreateDate(System.currentTimeMillis());
+                        file.setModifyDate(System.currentTimeMillis());
                         file.setCurrentFolder(mCurrentFolder);
                         file.setPreviousFolder(mCurrentFolder == null
                                 ? null
@@ -321,10 +320,37 @@ public class FilesFragment extends Fragment {
                             }
                         });
                     }
+                }
+
+        );
+    }
+
+    private void showInputDialog(int titleRes
+            , int iconRes
+            , int colorRes
+            , int errorMsg
+            , int confirmRes
+            , LovelyTextInputDialog.OnTextInputConfirmListener listener) {
+        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
+                .setTitle(AppData.getString(titleRes))
+                .setIcon(iconRes)
+                .setTopColorRes(colorRes)
+                .setInputFilter(AppData.getString(errorMsg), new LovelyTextInputDialog.TextFilter() {
+                    @Override
+                    public boolean check(String text) {
+                        return !text.isEmpty();
+                    }
                 })
+                .setConfirmButton(confirmRes, listener)
                 .show();
     }
 
+    /**
+     * Generate the disappear animation of a single view
+     *
+     * @param view The view to be animated
+     * @return Generated animator
+     */
     private Animator generateAnimator(final View view) {
         Animator animator = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f);
         animator.setDuration(300);
@@ -382,7 +408,7 @@ public class FilesFragment extends Fragment {
                             .getRealm()
                             .where(WhriterFile.class)
                             .equalTo("isRoot", true)
-                            .findAllSortedAsync("createDate", Sort.DESCENDING);
+                            .findAllSortedAsync("modifyDate", Sort.DESCENDING);
             currentFolderResults.addChangeListener(new RealmChangeListener<RealmResults<WhriterFile>>() {
                 @Override
                 public void onChange(RealmResults<WhriterFile> element) {
@@ -402,7 +428,7 @@ public class FilesFragment extends Fragment {
                         .getRealm()
                         .where(WhriterFile.class)
                         .equalTo("currentFolder.id", mCurrentFolder.getId())
-                        .findAllSortedAsync("createDate", Sort.DESCENDING);
+                        .findAllSortedAsync("modifyDate", Sort.DESCENDING);
         currentFolderResults.addChangeListener(new RealmChangeListener<RealmResults<WhriterFile>>() {
             @Override
             public void onChange(RealmResults<WhriterFile> element) {

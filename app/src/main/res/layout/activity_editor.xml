@@ -217,9 +217,17 @@
                 android:src="@drawable/ic_share_white_24dp"/>
 
             <ImageButton
+                android:id="@+id/button_template"
                 style="@style/drawer_button"
                 android:layout_below="@id/button_share"
                 android:src="@drawable/ic_folder_white_24dp"/>
+
+            <ImageButton
+                android:id="@+id/button_info"
+                style="@style/drawer_button"
+                android:layout_below="@id/button_template"
+                android:src="@drawable/ic_info_white_24dp"/>
+
         </RelativeLayout>
 
     </ScrollView>

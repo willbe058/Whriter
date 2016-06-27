@@ -38,4 +38,12 @@
     <string name="share_to">分享到...</string>
     <string name="save_to">已保存至</string>
     <string name="form_whriter">来自Whriter</string>
+    <string name="clear">清空所有内容？</string>
+    <string name="count">字数</string>
+    <string name="detail">详情</string>
+    <string name="modify_date">修改时间</string>
+    <string name="title_info">标题</string>
+    <string name="regenera">重新生成帮助文档</string>
+    <string name="rege_sum">如果你遗忘了一些功能，可以重新看看帮助文档</string>
+    <string name="create_date">创建时间</string>
 </resources>

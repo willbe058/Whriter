@@ -74,13 +74,13 @@ public class FilesAdapter extends RealmRecyclerViewAdapter<WhriterFile, FilesAda
             holder.preview.setVisibility(View.GONE);
         }
 
-        if (System.currentTimeMillis() - item.getCreateDate() > 6 * 1000 * 60 * 60) {
+        if (System.currentTimeMillis() - item.getModifyDate() > 6 * 1000 * 60 * 60) {
             AbsoluteDateFormat absoluteDateFormat = new AbsoluteDateFormat(context,
                     NaturalDateFormat.DATE | NaturalDateFormat.HOURS | NaturalDateFormat.MINUTES);
-            holder.createDate.setText(absoluteDateFormat.format(item.getCreateDate()));
+            holder.createDate.setText(absoluteDateFormat.format(item.getModifyDate()));
         } else {
             RelativeDateFormat relativeDateFormat = new RelativeDateFormat(context, NaturalDateFormat.TIME);
-            holder.createDate.setText(relativeDateFormat.format(item.getCreateDate()));
+            holder.createDate.setText(relativeDateFormat.format(item.getModifyDate()));
         }
     }
 

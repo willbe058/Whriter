@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView title;
     private FilesFragment fragment = new FilesFragment();
     private boolean backEnabled = true;
-    private Toolbar toolbar;
 
     private void setUpToolbar(Toolbar toolbar) {
         setSupportActionBar(toolbar);
@@ -63,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         BusProvider.getInstance().register(this);
         setContentView(R.layout.activity_main);
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setUpToolbar(toolbar);
         setUpContent();
     }
@@ -80,11 +79,6 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
-//
-//    @Override
-//    protected void attachBaseContext(Context newBase) {
-//        super.attachBaseContext(CalligraphyContextWrapper.wrap(newBase));
-//    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -110,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (!fragment.onBackPressed()) {
-
             if ((System.currentTimeMillis() - mExitTime) > 2000) {
                 Toast.makeText(this, AppData.getString(R.string.press_back), Toast.LENGTH_SHORT).show();
                 mExitTime = System.currentTimeMillis();
