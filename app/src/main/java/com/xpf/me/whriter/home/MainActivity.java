@@ -13,6 +13,7 @@ import com.squareup.otto.Subscribe;
 import com.xpf.me.whriter.R;
 import com.xpf.me.whriter.common.AppData;
 import com.xpf.me.whriter.event.BusProvider;
+import com.xpf.me.whriter.lockscreen.LockActivity;
 import com.xpf.me.whriter.settings.SettingsActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -49,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setHomeButtonEnabled(true);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_arrow_back_black_24dp);
-        }
+        }g
     }
 
     @Subscribe
@@ -65,6 +66,13 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setUpToolbar(toolbar);
         setUpContent();
+//        startActivity(new Intent(this, LockActivity.class));
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     @Override

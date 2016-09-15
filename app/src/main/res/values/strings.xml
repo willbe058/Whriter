@@ -49,4 +49,9 @@
     <string name="version">Version</string>
     <string name="regenera">Re-generate help documents for you</string>
     <string name="rege_sum">Check the help documents again in case of you forgot some details</string>
+
+    <string name="clear_title">Clear all files? </string>
+    <string name="clear_content">This action will remove all the files and folders in Whriter.</string>
+    <!--Fingerprint-->
+    <string name="status_error">Error: %1$s</string>
 </resources>

@@ -19,8 +19,11 @@
             android:key="finger_key"
             android:summary="@string/finger_sum"
             android:title="@string/fingerprint"/>
-        <com.jenzz.materialpreference.Preference
+        <com.afollestad.materialdialogs.prefs.MaterialListPreference
+            android:entries="@array/preference_values"
+            android:entryValues="@array/preference_values"
             android:key="relock_key"
+            android:persistent="true"
             android:summary="@string/relock_sum"
             android:title="@string/relock"/>
     </com.jenzz.materialpreference.PreferenceCategory>

@@ -8,12 +8,12 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -36,11 +36,14 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.bowyer.app.fabtoolbar.FabToolbar;
 import com.cocosw.bottomsheet.BottomSheet;
 import com.github.mr5.icarus.Callback;
 import com.github.mr5.icarus.Icarus;
 import com.github.mr5.icarus.TextViewToolbar;
+import com.github.mr5.icarus.button.Button;
 import com.github.mr5.icarus.button.FontScaleButton;
 import com.github.mr5.icarus.button.TextViewButton;
 import com.github.mr5.icarus.entity.Options;
@@ -78,16 +81,12 @@ import io.realm.Realm;
 import tk.zielony.naturaldateformat.AbsoluteDateFormat;
 import tk.zielony.naturaldateformat.NaturalDateFormat;
 
-import com.github.mr5.icarus.button.Button;
-import com.yarolegovich.lovelydialog.LovelyCustomDialog;
-import com.yarolegovich.lovelydialog.LovelyStandardDialog;
-
 /**
  * Created by pengfeixie on 16/5/23.
  */
 public class EditorActivity extends AppCompatActivity implements Shareable {
 
-    // TODO: 16/6/27 import text 
+    // TODO: 16/6/27 import text
     private static final String TAG = EditorActivity.class.getName();
     private static final String EXTRA_ID = "file_id";
     private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 1;
@@ -305,6 +304,11 @@ public class EditorActivity extends AppCompatActivity implements Shareable {
     }
 
 
+    /**
+     * Share image after asking for permissions
+     * @param requestCode
+     * @param grantResults
+     */
     private void shareImageHavingPermission(int requestCode, int[] grantResults) {
         if (requestCode == WRITE_EXTERNAL_STORAGE_REQUEST_CODE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -404,26 +408,21 @@ public class EditorActivity extends AppCompatActivity implements Shareable {
     @OnClick(R.id.button_delete)
     void setDeleteBtn() {
         drawerLayout.closeDrawers();
-        new LovelyStandardDialog(this, R.style.EditTextDialogTheme)
-                .setTitle(AppData.getString(R.string.clear))
-                .setIcon(R.drawable.ic_delete_white_24dp)
-                .setTopColorRes(android.R.color.holo_red_dark)
-                .setCancelable(true)
-                .setPositiveButtonColorRes(android.R.color.holo_red_dark)
-                .setPositiveButton(android.R.string.ok, new View.OnClickListener() {
+        new MaterialDialog.Builder(this)
+                .title(R.string.clear)
+                .positiveText(android.R.string.ok)
+                .positiveColor(AppData.getColor(android.R.color.holo_red_dark))
+                .negativeColor(AppData.getColor(android.R.color.black))
+                .negativeText(android.R.string.cancel)
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
                     @Override
-                    public void onClick(View v) {
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                         RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
                             @Override
                             public void execute(Realm realm) {
                                 icarus.setContent("");
                             }
                         });
-                    }
-                })
-                .setNegativeButton(android.R.string.cancel, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
                     }
                 })
                 .show();
@@ -502,11 +501,11 @@ public class EditorActivity extends AppCompatActivity implements Shareable {
                         | NaturalDateFormat.SECONDS);
                 modified.setText(d.format(modifyDate));
                 create.setText(d.format(createDate));
-                new LovelyCustomDialog(EditorActivity.this)
-                        .setView(infoView)
-                        .setTopColorRes(R.color.colorFab)
-                        .setIcon(R.drawable.ic_info_white_24dp)
-                        .show();
+                MaterialDialog dialog = new MaterialDialog.Builder(EditorActivity.this)
+                        .title(R.string.detail)
+                        .customView(infoView, true)
+                        .build();
+                dialog.show();
             }
         });
 
@@ -534,9 +533,6 @@ public class EditorActivity extends AppCompatActivity implements Shareable {
         });
     }
 
-    /**
-     * Share the image of the content of the editor
-     */
     @Override
     public void shareImage() {
         //save and get the path of image
@@ -563,7 +559,6 @@ public class EditorActivity extends AppCompatActivity implements Shareable {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        Log.i(TAG, "onRequestPermissionsResult: ");
         shareImageHavingPermission(requestCode, grantResults);
     }
 

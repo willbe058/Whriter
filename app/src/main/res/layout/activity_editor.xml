@@ -189,7 +189,7 @@
             android:layout_gravity="end|bottom"
             android:layout_margin="16dp"
             android:src="@drawable/ic_mode_edit_white_24dp"
-            app:backgroundTint="@color/colorFab"/>
+            app:backgroundTint="@color/colorAccent"/>
     </android.support.design.widget.CoordinatorLayout>
 
     <ScrollView

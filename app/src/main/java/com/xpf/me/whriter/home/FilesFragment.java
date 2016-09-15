@@ -3,17 +3,21 @@ package com.xpf.me.whriter.home;
 import android.animation.Animator;
 import android.animation.ObjectAnimator;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.ContentLoadingProgressBar;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.InputType;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.xpf.me.whriter.R;
@@ -22,8 +26,6 @@ import com.xpf.me.whriter.common.RealmProvider;
 import com.xpf.me.whriter.editor.EditorActivity;
 import com.xpf.me.whriter.event.BusProvider;
 import com.xpf.me.whriter.model.WhriterFile;
-import com.yarolegovich.lovelydialog.LovelyStandardDialog;
-import com.yarolegovich.lovelydialog.LovelyTextInputDialog;
 
 import java.util.UUID;
 
@@ -69,7 +71,7 @@ public class FilesFragment extends Fragment {
     private WhriterFile mCurrentFolder;
     private RealmResults<WhriterFile> currentFolderResults;
     private WhriterFile mChosenFile;
-    private boolean backEnable;
+    private boolean backEnable = true;
 
     @Nullable
     @Override
@@ -177,15 +179,15 @@ public class FilesFragment extends Fragment {
     void setDeleteButton() {
         if (mChosenFile != null) {
             generateAnimator(longClickView).start();
-            new LovelyStandardDialog(getActivity(), R.style.EditTextDialogTheme)
-                    .setTitle(AppData.getString(R.string.delete))
-                    .setIcon(R.drawable.ic_delete_white_24dp)
-                    .setTopColorRes(android.R.color.holo_red_dark)
-                    .setCancelable(true)
-                    .setPositiveButtonColorRes(android.R.color.holo_red_dark)
-                    .setPositiveButton(android.R.string.ok, new View.OnClickListener() {
+            new MaterialDialog.Builder(getActivity())
+                    .title(R.string.delete)
+                    .positiveText(android.R.string.ok)
+                    .positiveColor(AppData.getColor(android.R.color.holo_red_dark))
+                    .negativeColor(AppData.getColor(android.R.color.black))
+                    .negativeText(android.R.string.cancel)
+                    .onPositive(new MaterialDialog.SingleButtonCallback() {
                         @Override
-                        public void onClick(View v) {
+                        public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
                             RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
                                 @Override
                                 public void execute(Realm realm) {
@@ -197,12 +199,9 @@ public class FilesFragment extends Fragment {
                             });
                         }
                     })
-                    .setNegativeButton(android.R.string.cancel, new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                        }
-                    })
                     .show();
+
+
         }
     }
 
@@ -210,54 +209,42 @@ public class FilesFragment extends Fragment {
     void setRenameButton() {
         if (mChosenFile != null) {
             generateAnimator(longClickView).start();
-            RealmProvider.getInstance().getRealm().executeTransaction(new Realm.Transaction() {
-                @Override
-                public void execute(Realm realm) {
-                    new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                            .setTitle(AppData.getString(R.string.rename_title))
-                            .setInitialInput(mChosenFile.getTitle())
-                            .setIcon(R.drawable.ic_mode_edit_white_24dp)
-                            .setTopColorRes(R.color.colorFab)
-                            .setInputFilter(AppData.getString(R.string.title_not_null), new LovelyTextInputDialog.TextFilter() {
-                                @Override
-                                public boolean check(String text) {
-                                    return !text.isEmpty();
-                                }
-                            })
-                            .setConfirmButton(android.R.string.ok, new LovelyTextInputDialog.OnTextInputConfirmListener() {
-                                @Override
-                                public void onTextInputConfirmed(final String text) {
-                                    RealmProvider
-                                            .getInstance()
-                                            .getRealm()
-                                            .executeTransaction(new Realm.Transaction() {
-                                                @Override
-                                                public void execute(Realm realm) {
-                                                    mChosenFile.setTitle(text);
-                                                    realm.copyToRealm(mChosenFile);
-                                                }
-                                            });
-                                }
-                            })
-                            .show();
-
-                }
-            });
+            new MaterialDialog.Builder(getActivity())
+                    .title(R.string.title)
+                    .inputType(InputType.TYPE_CLASS_TEXT |
+                            InputType.TYPE_TEXT_VARIATION_PERSON_NAME |
+                            InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+                    .positiveText(android.R.string.ok)
+                    .input(null, mChosenFile.getTitle(), false, new MaterialDialog.InputCallback() {
+                        @Override
+                        public void onInput(@NonNull MaterialDialog dialog, final CharSequence input) {
+                            RealmProvider
+                                    .getInstance()
+                                    .getRealm()
+                                    .executeTransaction(new Realm.Transaction() {
+                                        @Override
+                                        public void execute(Realm realm) {
+                                            mChosenFile.setTitle(input.toString());
+                                            realm.copyToRealm(mChosenFile);
+                                        }
+                                    });
+                        }
+                    }).show();
         }
     }
 
     @OnClick(R.id.add_file)
     void setFileFab() {
         floatingActionMenu.close(true);
-        showInputDialog(
-                R.string.title
-                , R.drawable.ic_mode_edit_white_24dp
-                , R.color.colorFab
-                , R.string.title_not_null
-                , android.R.string.ok
-                , new LovelyTextInputDialog.OnTextInputConfirmListener() {
+        new MaterialDialog.Builder(getActivity())
+                .title(R.string.title)
+                .inputType(InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_PERSON_NAME |
+                        InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+                .positiveText(android.R.string.ok)
+                .input(0, 0, false, new MaterialDialog.InputCallback() {
                     @Override
-                    public void onTextInputConfirmed(String text) {
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
                         if (mCurrentFolder != null) {
                             RealmProvider.getInstance().getRealm().beginTransaction();
                             mCurrentFolder.setModifyDate(System.currentTimeMillis());
@@ -266,7 +253,7 @@ public class FilesFragment extends Fragment {
                         final WhriterFile file = new WhriterFile();
                         file.setId(UUID.randomUUID().toString());
                         file.setFile(true);
-                        file.setTitle(text);
+                        file.setTitle(input.toString());
                         file.setRoot(mCurrentFolder == null);
                         file.setCurrentFolder(mCurrentFolder);
                         file.setCreateDate(System.currentTimeMillis());
@@ -278,25 +265,25 @@ public class FilesFragment extends Fragment {
                             @Override
                             public void execute(Realm realm) {
                                 realm.copyToRealm(file);
+                                EditorActivity.enterEditor(getActivity(), file.getId());
                             }
                         });
                     }
-                }
-        );
+                }).show();
     }
 
     @OnClick(R.id.add_folder)
     void setFolderFab() {
         floatingActionMenu.close(true);
-        showInputDialog(
-                R.string.name
-                , R.drawable.ic_folder_white_24dp
-                , R.color.colorFab
-                , R.string.name_not_null
-                , android.R.string.ok
-                , new LovelyTextInputDialog.OnTextInputConfirmListener() {
+        new MaterialDialog.Builder(getActivity())
+                .title(R.string.name)
+                .inputType(InputType.TYPE_CLASS_TEXT |
+                        InputType.TYPE_TEXT_VARIATION_PERSON_NAME |
+                        InputType.TYPE_TEXT_FLAG_CAP_WORDS)
+                .positiveText(android.R.string.ok)
+                .input(0, 0, false, new MaterialDialog.InputCallback() {
                     @Override
-                    public void onTextInputConfirmed(String text) {
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
                         if (mCurrentFolder != null) {
                             RealmProvider.getInstance().getRealm().beginTransaction();
                             mCurrentFolder.setModifyDate(System.currentTimeMillis());
@@ -306,7 +293,7 @@ public class FilesFragment extends Fragment {
                         file.setId(UUID.randomUUID().toString());
                         file.setFile(false);
                         file.setRoot(mCurrentFolder == null);
-                        file.setTitle(text);
+                        file.setTitle(input.toString());
                         file.setCreateDate(System.currentTimeMillis());
                         file.setModifyDate(System.currentTimeMillis());
                         file.setCurrentFolder(mCurrentFolder);
@@ -320,30 +307,9 @@ public class FilesFragment extends Fragment {
                             }
                         });
                     }
-                }
-
-        );
+                }).show();
     }
 
-    private void showInputDialog(int titleRes
-            , int iconRes
-            , int colorRes
-            , int errorMsg
-            , int confirmRes
-            , LovelyTextInputDialog.OnTextInputConfirmListener listener) {
-        new LovelyTextInputDialog(getActivity(), R.style.EditTextDialogTheme)
-                .setTitle(AppData.getString(titleRes))
-                .setIcon(iconRes)
-                .setTopColorRes(colorRes)
-                .setInputFilter(AppData.getString(errorMsg), new LovelyTextInputDialog.TextFilter() {
-                    @Override
-                    public boolean check(String text) {
-                        return !text.isEmpty();
-                    }
-                })
-                .setConfirmButton(confirmRes, listener)
-                .show();
-    }
 
     /**
      * Generate the disappear animation of a single view

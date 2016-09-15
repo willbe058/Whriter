@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="preference_values">
+        <item>Immediately</item>
+        <item>10 sec later</item>
+        <item>30 sec later</item>
+        <item>60 sec later</item>
+        <item>5 min later</item>
+    </string-array>
+</resources>
